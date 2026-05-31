@@ -1,0 +1,41 @@
+name: CI/CD Infrastructure Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate-and-test:
+    name: Code Validation & CDK Synth
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Descargar el código del repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Configurar el entorno de Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # 3. Instalar dependencias limpias (producción y desarrollo)
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Validar formato y calidad de código (Opcional si tienes los scripts)
+      - name: Run Linter
+        run: npm run lint --if-present
+
+      # 5. Ejecutar los Tests de CDK (Prueba de Assertions y Snapshots)
+      - name: Run CDK Unit Tests
+        run: npm run test
+
+      # 6. El "Simulacro" de Despliegue (CDK Synth)
+      # Genera el template final de CloudFormation para validar que no haya errores de síntesis.
+      - name: CDK Synthesize (Dry Run Deployment)
+        run: npx cdk synth
